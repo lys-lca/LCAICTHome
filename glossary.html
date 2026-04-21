@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LCA ICT Glossary</title>
+
+  <!-- Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  >
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="glossary.css">
+
+  <!--
+    Prevent flash of wrong theme: apply saved theme before first paint.
+    This tiny inline script runs synchronously before the body renders.
+  -->
+  <script>
+    (function () {
+      const saved = localStorage.getItem('lca-ict-glossary-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const theme = saved ?? (prefersDark ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- ── THEME TOGGLE ── -->
+  <button
+    class="theme-toggle"
+    id="theme-toggle"
+    aria-label="Toggle dark / light mode"
+    title="Toggle dark / light mode"
+  >
+    <span class="icon-dark"  aria-hidden="true">☀</span>
+    <span class="icon-light" aria-hidden="true">☾</span>
+  </button>
+
+  <!-- ── HEADER ── -->
+  <header class="site-header">
+    <div class="header-deco" aria-hidden="true"></div>
+    <p class="header-label">Leaving Certificate Applied · ICT</p>
+    <h1 class="header-title">ICT <span>Glossary</span></h1>
+    <p class="header-sub">
+      Key terms, abbreviations and concepts for the
+      Information &amp; Communication Technology module.
+    </p>
+  </header>
+
+  <!-- ── STATS BAR ── -->
+  <div class="stats-bar" role="status" aria-live="polite">
+    <div class="stat">
+      <strong id="total-count">—</strong>terms
+    </div>
+    <div class="stat">
+      <strong id="visible-count">—</strong>visible
+    </div>
+    <div class="stat">
+      <strong id="cat-count">—</strong>categories
+    </div>
+  </div>
+
+  <!-- ── CONTROLS: search · filters · sort ── -->
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        id="search"
+        placeholder="Search terms or definitions…"
+        autocomplete="off"
+        aria-label="Search glossary"
+      >
+    </div>
+
+    <div class="filter-btns" id="filter-btns" role="group" aria-label="Filter by category">
+      <!-- "All" button is static; category buttons are injected by glossary-ui.js -->
+      <button class="filter-btn active" data-filter="all">All</button>
+    </div>
+
+    <button class="sort-btn" id="sort-toggle" title="Toggle sort order" aria-label="Toggle sort order">
+      A→Z ↕
+    </button>
+  </div>
+
+  <!-- ── ALPHABET NAV ── -->
+  <nav class="alpha-nav" id="alpha-nav" aria-label="Browse by letter"></nav>
+
+  <!-- ── MAIN CONTENT ── -->
+  <main>
+    <div id="glossary-container"></div>
+
+    <div class="no-results" id="no-results" role="status" aria-live="polite">
+      <div class="no-results-icon" aria-hidden="true">◌</div>
+      <h3>No terms found</h3>
+      <p>Try a different search or clear your filters.</p>
+    </div>
+  </main>
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    LCA ICT Glossary · Ms N Cahillane · Last updated 2025
+  </footer>
+
+  <!-- ── SCRIPTS ── -->
+  <!-- Data must load before UI so GLOSSARY and CATEGORIES are defined -->
+  <script src="glossary-data.js"></script>
+  <script src="glossary-ui.js"></script>
+
+</body>
+</html>
