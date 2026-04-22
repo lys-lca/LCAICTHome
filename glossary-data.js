@@ -1,20 +1,29 @@
 /**
  * glossary-data.js
  * ─────────────────────────────────────────────────────────────
- * LCA ICT — Glossary data: terms, abbreviations, definitions,
- * categories and category metadata.
+ * LCA ICT — Shared data for ALL site sections.
  *
- * To add a new term:
- *   { term: "Full Name", abbr: "ABBR", def: "Definition here.", hint: "Short nudge.", tags: ["category"] }
+ * Each entry:
+ *   term         full name shown on card front (concept) or glossary heading
+ *   abbr         abbreviation string, or null if none
+ *   hint         short nudge: acronym cards → reveals full term in JS (no field needed)
+ *                             concept cards → this text shown as hint
+ *   def          full definition shown on card back and in glossary
+ *   tags         array of category keys — must exist in CATEGORIES
+ *   searchable   false → exclude from Wordsearch (slashes, punctuation etc.)
+ *                omit or true → included in Wordsearch
  *
- * searchable: false  → exclude from Wordsearch (terms with slashes, spaces or punctuation)
- *   Omit the field (or set true) to include in wordsearch.
- *   Set abbr: null if the term has no abbreviation.
- *   Tags must match a key in CATEGORIES below.
+ * Images (optional — no field needed in data):
+ *   Drop a .png into the images/ folder named after the term or abbreviation.
+ *   The JS derives the filename automatically:
+ *     abbr exists (no slash) → abbr with non-alphanumeric chars stripped  e.g. CPU.png
+ *     abbr has a slash       → falls back to term-based name
+ *     no abbr                → term with spaces→underscores, punctuation stripped
+ *   Image shows in flashcard answer and glossary card if the file exists.
+ *   No image = no placeholder shown.
  *
- * To add a new category:
- *   Add an entry to CATEGORIES with label, color, border, bg.
- *   The filter button will appear automatically — no other changes needed.
+ * To add a category:
+ *   Add an entry to CATEGORIES. Filter buttons appear automatically everywhere.
  * ─────────────────────────────────────────────────────────────
  */
 

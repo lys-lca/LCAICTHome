@@ -24,6 +24,7 @@ let results   = {};   // { idx: 'correct' | 'wrong' | null }
 let hintsUsed = new Set(); // indices where hint was shown
 let gameMode  = 'all';
 let isFlipped = false;
+let suppressNextTap = false; // prevents card flip when hint button is tapped on mobile
 
 // ── ELEMENTS ──────────────────────────────────────────────────
 const el = id => document.getElementById(id);
@@ -173,6 +174,14 @@ function renderCard(idx) {
   }
   elDef.textContent = card.def;
 
+  // ── IMAGE (back face) ──
+  // Clear any previous image and reset wrap class
+  const elBackFace = elCard.querySelector('.fc-back');
+  elBackFace.querySelectorAll('.card-img').forEach(i => i.remove());
+  elBackFace.classList.remove('card-image-wrap');
+  // Attempt to load — injectCardImage adds img only if file exists
+  injectCardImage(card, elBackFace, 'fc-card-img');
+
   // ── MARKED STATE ──
   elCard.classList.remove('marked-correct', 'marked-wrong');
   const r = results[idx];
@@ -215,6 +224,11 @@ function refreshScores() {
 function showHint() {
   const card    = deck[cursor];
   const acronym = isAcronym(card);
+
+  // Suppress the card flip that would otherwise fire on mobile
+  // when the touchend bubbles up to the card after the button tap
+  suppressNextTap = true;
+  setTimeout(() => { suppressNextTap = false; }, 350);
 
   // Log hint usage
   hintsUsed.add(cursor);
@@ -431,8 +445,8 @@ function printIncorrect() {
       return;
     }
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-      // Tap → flip
-      flipCard();
+      // Tap → flip, unless a button tap just fired (e.g. hint button)
+      if (!suppressNextTap) flipCard();
     }
   }, { passive: true });
 })();

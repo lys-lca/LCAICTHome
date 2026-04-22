@@ -116,15 +116,18 @@ function renderCards(terms) {
         <div class="cards-grid">`;
 
     group.forEach((item, i) => {
-      const termHl  = highlight(item.term, currentSearch);
-      const defHl   = highlight(item.def,  currentSearch);
-      const abbrHl  = item.abbr ? highlight(item.abbr, currentSearch) : null;
-      const tagsHtml = item.tags
+      const termHl     = highlight(item.term, currentSearch);
+      const defHl      = highlight(item.def,  currentSearch);
+      const abbrHl     = item.abbr ? highlight(item.abbr, currentSearch) : null;
+      const tagsHtml   = item.tags
         .map(tag => `<span class="tag ${tag}">${CATEGORIES[tag]?.label ?? tag}</span>`)
         .join('');
+      // Store GLOSSARY index so the post-render pass can look up the card object
+      const glossaryIdx = GLOSSARY.indexOf(item);
 
       html += `
-        <div class="card" style="animation-delay:${i * 0.03}s">
+        <div class="card" style="animation-delay:${i * 0.03}s"
+             data-glossary-idx="${glossaryIdx}">
           <div class="card-head">
             <span class="card-term">${termHl}</span>
             ${item.abbr ? `<span class="card-abbr">${abbrHl}</span>` : ''}
@@ -139,6 +142,16 @@ function renderCards(terms) {
 
   container.innerHTML = html;
   document.getElementById('visible-count').textContent = terms.length;
+
+  // ── POST-RENDER: inject images where available ──
+  // image-utils.js may not be loaded on all pages — guard with typeof check
+  if (typeof injectCardImage === 'function') {
+    container.querySelectorAll('.card[data-glossary-idx]').forEach(cardEl => {
+      const idx  = parseInt(cardEl.dataset.glossaryIdx, 10);
+      const item = GLOSSARY[idx];
+      if (item) injectCardImage(item, cardEl);
+    });
+  }
 }
 
 // ── MAIN RENDER ───────────────────────────────────────────────
