@@ -3,28 +3,34 @@
  * ─────────────────────────────────────────────────────────────
  * LCA ICT — Flashcard game logic.
  *
- * Card types
- * ──────────
- *   ACRONYM  card.abbr is set  → front shows abbr,  hint reveals term
- *   CONCEPT  card.abbr is null → front shows term,   hint reveals card.hint
+ * Interaction model
+ * ─────────────────
+ *   Hint button (above card) — shows hint, never flips
+ *   Card itself             — display only, no click/tap/swipe
+ *   "Reveal answer" button  — flips card, enables mark buttons,
+ *                             becomes "Hide answer" to flip back
+ *   ✓ Correct / ✗ Incorrect — only active after card is revealed
+ *   ← → nav buttons        — move between cards
  *
- * Hint tracking
- * ─────────────
- *   hintsUsed Set tracks indices where hint was revealed.
- *   Shown in: status bar (live count), review cards, print sheet.
+ * Keyboard shortcuts (unchanged):
+ *   Space / Enter → flip
+ *   H             → show hint
+ *   C             → mark correct  (only when flipped)
+ *   X             → mark wrong    (only when flipped)
+ *   ← →           → navigate
  *
- * Depends on: glossary-data.js (GLOSSARY, CATEGORIES), shared.js
+ * Depends on: glossary-data.js (GLOSSARY, CATEGORIES), shared.js,
+ *             image-utils.js (injectCardImage)
  * ─────────────────────────────────────────────────────────────
  */
 
 // ── STATE ─────────────────────────────────────────────────────
-let deck      = [];   // current shuffled card array
-let cursor    = 0;    // index into deck
-let results   = {};   // { idx: 'correct' | 'wrong' | null }
-let hintsUsed = new Set(); // indices where hint was shown
+let deck      = [];
+let cursor    = 0;
+let results   = {};
+let hintsUsed = new Set();
 let gameMode  = 'all';
 let isFlipped = false;
-let suppressNextTap = false; // prevents card flip when hint button is tapped on mobile
 
 // ── ELEMENTS ──────────────────────────────────────────────────
 const el = id => document.getElementById(id);
@@ -42,15 +48,19 @@ const elScCorrect  = el('score-correct');
 const elScWrong    = el('score-wrong');
 const elScHints    = el('score-hints');
 
+const elHintRow    = el('hint-row');
+const elBtnHint    = el('btn-hint');
+const elHintText   = el('fc-hint-text');
+
 const elCard       = el('fc-card');
 const elCatTag     = el('fc-cat-tag');
 const elTypeBadge  = el('fc-type-badge');
 const elTerm       = el('fc-term');
-const elBtnHint    = el('btn-hint');
-const elHintText   = el('fc-hint-text');
+const elHintDot    = el('fc-hint-dot');
 const elBackTerm   = el('fc-back-term');
 const elDef        = el('fc-def');
 
+const elBtnFlip    = el('btn-flip');
 const elBtnCorrect = el('btn-correct');
 const elBtnWrong   = el('btn-wrong');
 const elBtnPrev    = el('btn-prev');
@@ -105,6 +115,25 @@ function updateSetupCount() {
   elSetupCount.textContent = `${n} card${n !== 1 ? 's' : ''} in selection`;
 }
 
+// ── FLIP STATE ────────────────────────────────────────────────
+function setFlipped(flipped) {
+  isFlipped = flipped;
+  elCard.classList.toggle('flipped', flipped);
+
+  // Flip button label
+  if (flipped) {
+    elBtnFlip.textContent = 'Hide answer ↑';
+    elBtnFlip.classList.add('is-flipped');
+  } else {
+    elBtnFlip.textContent = 'Reveal answer ↓';
+    elBtnFlip.classList.remove('is-flipped');
+  }
+
+  // Mark buttons only active when answer is showing
+  elBtnCorrect.disabled = !flipped;
+  elBtnWrong.disabled   = !flipped;
+}
+
 // ── GAME START ────────────────────────────────────────────────
 function startSession(cards) {
   deck      = cards || buildDeck();
@@ -130,21 +159,21 @@ function renderCard(idx) {
   const card = deck[idx];
   if (!card) return;
 
-  // Reset flip
-  isFlipped = false;
-  elCard.classList.remove('flipped');
+  // Always start un-flipped on a new card
+  setFlipped(false);
 
   // Reset hint UI
   elHintText.classList.add('hidden');
   elHintText.textContent = '';
-  elHintText.className = 'fc-hint-text hidden';
-  elBtnHint.classList.remove('hidden');
+  elHintText.className   = 'fc-hint-text hidden';
+  elBtnHint.textContent  = '💡 Show hint';
+  elBtnHint.disabled     = false;
+  elBtnHint.classList.remove('hint-revealed');
 
   const acronym = isAcronym(card);
   const meta    = catMeta(card);
 
   // ── FRONT ──
-  // Category tag
   elCatTag.textContent = meta ? meta.label : (card.tags?.[0] || '');
   if (meta) {
     elCatTag.style.color       = meta.color;
@@ -152,19 +181,20 @@ function renderCard(idx) {
     elCatTag.style.background  = meta.bg;
   }
 
-  // Type badge
   elTypeBadge.textContent = acronym ? 'Acronym' : 'Term';
   elTypeBadge.className   = `fc-type-badge ${acronym ? 'type-acronym' : 'type-concept'}`;
 
-  // Main display — abbreviation for acronyms, full term for concepts
+  // Acronym cards show the abbreviation; concept cards show the full term
   elTerm.textContent = acronym ? card.abbr : card.term;
 
-  // Hint button: always visible (acronym hint = term, concept hint = card.hint)
+  // Hint dot — re-show if hint was already used on this card this session
+  elHintDot.classList.toggle('hidden', !hintsUsed.has(idx));
+
+  // Hide hint button if there's nothing to show
   const hasHint = acronym ? true : Boolean(card.hint);
   elBtnHint.style.display = hasHint ? '' : 'none';
 
   // ── BACK ──
-  // For acronym cards show the full expansion at the top of the back
   if (acronym) {
     elBackTerm.textContent = card.term;
     elBackTerm.classList.remove('hidden');
@@ -175,21 +205,18 @@ function renderCard(idx) {
   elDef.textContent = card.def;
 
   // ── IMAGE (back face) ──
-  // Clear any previous image and reset wrap class
   const elBackFace = elCard.querySelector('.fc-back');
   elBackFace.querySelectorAll('.card-img').forEach(i => i.remove());
   elBackFace.classList.remove('card-image-wrap');
-  // Attempt to load — injectCardImage adds img only if file exists
-  injectCardImage(card, elBackFace, 'fc-card-img');
+  if (typeof injectCardImage === 'function') {
+    injectCardImage(card, elBackFace, 'fc-card-img');
+  }
 
   // ── MARKED STATE ──
   elCard.classList.remove('marked-correct', 'marked-wrong');
   const r = results[idx];
   if (r === 'correct') elCard.classList.add('marked-correct');
   if (r === 'wrong')   elCard.classList.add('marked-wrong');
-
-  // Re-show hint-used dot if hint was already used on this card
-  renderHintDot(idx);
 
   // ── PROGRESS ──
   elProgress.style.width = `${((idx + 1) / deck.length) * 100}%`;
@@ -199,18 +226,6 @@ function renderCard(idx) {
   elBtnNext.disabled = idx === deck.length - 1;
 
   refreshScores();
-}
-
-function renderHintDot(idx) {
-  // Remove any existing dot
-  elCard.querySelectorAll('.fc-hint-used-dot').forEach(d => d.remove());
-  if (hintsUsed.has(idx)) {
-    const dot = document.createElement('div');
-    dot.className   = 'fc-hint-used-dot';
-    dot.textContent = '💡 hint used';
-    // append to front face
-    elCard.querySelector('.fc-front').appendChild(dot);
-  }
 }
 
 function refreshScores() {
@@ -225,29 +240,19 @@ function showHint() {
   const card    = deck[cursor];
   const acronym = isAcronym(card);
 
-  // Suppress the card flip that would otherwise fire on mobile
-  // when the touchend bubbles up to the card after the button tap
-  suppressNextTap = true;
-  setTimeout(() => { suppressNextTap = false; }, 350);
-
-  // Log hint usage
   hintsUsed.add(cursor);
+  elHintDot.classList.remove('hidden');
   refreshScores();
-  renderHintDot(cursor);
 
-  // Build hint text
   const hintText = acronym ? card.term : (card.hint || '');
   elHintText.textContent = hintText;
-  // Acronym hints get a bolder style since it's the full term
-  elHintText.className = `fc-hint-text${acronym ? ' hint-acronym' : ''}`;
+  elHintText.className   = `fc-hint-text${acronym ? ' hint-acronym' : ''}`;
   elHintText.classList.remove('hidden');
-  elBtnHint.classList.add('hidden');
-}
 
-// ── FLIP ──────────────────────────────────────────────────────
-function flipCard() {
-  isFlipped = !isFlipped;
-  elCard.classList.toggle('flipped', isFlipped);
+  // Replace button with a non-interactive indicator
+  elBtnHint.textContent = '💡 Hint shown';
+  elBtnHint.classList.add('hint-revealed');
+  elBtnHint.disabled = true;
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
@@ -261,7 +266,6 @@ function advance() {
   if (cursor < deck.length - 1) {
     goTo(cursor + 1);
   } else {
-    // Check if any cards are still unmarked
     const anyUnmarked = Object.values(results).some(v => v === null);
     if (!anyUnmarked) showReview();
   }
@@ -269,6 +273,8 @@ function advance() {
 
 // ── MARK ──────────────────────────────────────────────────────
 function markCard(result) {
+  if (!isFlipped) return; // safety — shouldn't be reachable since buttons are disabled
+
   results[cursor] = result;
   refreshScores();
 
@@ -285,7 +291,7 @@ function markCard(result) {
   }, 350);
 }
 
-// ── RESET ─────────────────────────────────────────────────────
+// ── RESET / NEW SESSION ───────────────────────────────────────
 function resetScores() {
   Object.keys(results).forEach(k => { results[k] = null; });
   hintsUsed.clear();
@@ -310,7 +316,6 @@ function showReview() {
   const hints   = hintsUsed.size;
   const pct     = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-  // Stats header
   elRevStats.innerHTML = `
     <div class="stat-item stat-correct"><strong>${correct}</strong>Correct</div>
     <div class="stat-item stat-wrong"><strong>${wrong}</strong>Incorrect</div>
@@ -318,7 +323,6 @@ function showReview() {
     <div class="stat-item stat-pct"><strong>${pct}%</strong>Score</div>
   `;
 
-  // Incorrect cards
   const wrongIndices = Object.entries(results)
     .filter(([, v]) => v === 'wrong')
     .map(([i]) => Number(i));
@@ -343,7 +347,6 @@ function showReview() {
   elBtnPrint.disabled = false;
   elBtnPrint.style.opacity = '';
 
-  // Title
   const titleEl = document.createElement('h3');
   titleEl.className = 'review-section-title';
   titleEl.innerHTML = `
@@ -352,7 +355,6 @@ function showReview() {
   `;
   elRevWrap.appendChild(titleEl);
 
-  // Cards
   const cardsWrap = document.createElement('div');
   cardsWrap.className = 'review-cards';
 
@@ -363,7 +365,6 @@ function showReview() {
 
     const div = document.createElement('div');
     div.className = `review-card${hintShown ? ' hint-used' : ''}`;
-
     div.innerHTML = `
       <div class="review-card-header">
         <span class="review-card-term">${acronym ? card.abbr : card.term}</span>
@@ -372,8 +373,10 @@ function showReview() {
           ${hintShown ? `<span class="review-hint-flag">💡 hint used</span>` : ''}
         </span>
       </div>
-      ${acronym ? `<div style="font-family:var(--display);font-size:0.9rem;font-weight:700;
-                              color:var(--accent);margin-bottom:0.35rem;">${card.term}</div>` : ''}
+      ${acronym
+        ? `<div style="font-family:var(--display);font-size:0.9rem;font-weight:700;
+                       color:var(--accent);margin-bottom:0.35rem;">${card.term}</div>`
+        : ''}
       <div class="review-card-def">${card.def}</div>
     `;
     cardsWrap.appendChild(div);
@@ -404,12 +407,8 @@ function printIncorrect() {
         <div class="print-card-term">
           ${acronym ? card.abbr : card.term}
         </div>
-        ${acronym
-          ? `<div class="print-card-abbr">Stands for: ${card.term}</div>`
-          : ''}
-        ${hintShown
-          ? `<div class="print-card-hint-used">💡 Hint was used during session</div>`
-          : ''}
+        ${acronym ? `<div class="print-card-abbr">Stands for: ${card.term}</div>` : ''}
+        ${hintShown ? `<div class="print-card-hint-used">💡 Hint was used during session</div>` : ''}
         <div class="print-card-def">${card.def}</div>
       </div>`;
   }).join('');
@@ -426,47 +425,38 @@ function printIncorrect() {
   window.print();
 }
 
-// ── TOUCH / SWIPE ─────────────────────────────────────────────
-(function initSwipe() {
-  let sx = 0, sy = 0;
-
-  elCard.addEventListener('touchstart', e => {
-    sx = e.changedTouches[0].clientX;
-    sy = e.changedTouches[0].clientY;
-  }, { passive: true });
-
-  elCard.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - sx;
-    const dy = e.changedTouches[0].clientY - sy;
-
-    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-      // Horizontal swipe
-      dx < 0 ? advance() : goTo(cursor - 1);
-      return;
-    }
-    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-      // Tap → flip, unless a button tap just fired (e.g. hint button)
-      if (!suppressNextTap) flipCard();
-    }
-  }, { passive: true });
-})();
-
 // ── KEYBOARD ──────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (elGame.classList.contains('hidden')) return;
+
   switch (e.key) {
-    case ' ': case 'Enter':
-      e.preventDefault(); flipCard(); break;
-    case 'ArrowRight': case 'ArrowDown':
-      e.preventDefault(); advance(); break;
-    case 'ArrowLeft': case 'ArrowUp':
-      e.preventDefault(); goTo(cursor - 1); break;
-    case 'h': case 'H':
-      if (!elBtnHint.classList.contains('hidden')) showHint(); break;
-    case 'c': case 'C':
-      if (isFlipped) markCard('correct'); break;
-    case 'x': case 'X':
-      if (isFlipped) markCard('wrong'); break;
+    case ' ':
+    case 'Enter':
+      e.preventDefault();
+      setFlipped(!isFlipped);
+      break;
+    case 'ArrowRight':
+    case 'ArrowDown':
+      e.preventDefault();
+      advance();
+      break;
+    case 'ArrowLeft':
+    case 'ArrowUp':
+      e.preventDefault();
+      goTo(cursor - 1);
+      break;
+    case 'h':
+    case 'H':
+      if (!elBtnHint.disabled) showHint();
+      break;
+    case 'c':
+    case 'C':
+      if (isFlipped) markCard('correct');
+      break;
+    case 'x':
+    case 'X':
+      if (isFlipped) markCard('wrong');
+      break;
   }
 });
 
@@ -490,23 +480,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   elBtnStart.addEventListener('click', () => startSession());
 
-  // Card interactions
-  elCard.addEventListener('click', e => {
-    // Don't flip if the hint button or hint text was clicked
-    if (e.target.closest('.btn-hint') || e.target.closest('.fc-hint-text')) return;
-    flipCard();
-  });
-  elCard.addEventListener('keydown', e => {
-    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+  // Hint — button only, no card interaction
+  elBtnHint.addEventListener('click', () => {
+    if (!elBtnHint.disabled) showHint();
   });
 
-  // Hint
-  elBtnHint.addEventListener('click', e => {
-    e.stopPropagation();
-    showHint();
-  });
+  // Flip button — the only way to flip the card
+  elBtnFlip.addEventListener('click', () => setFlipped(!isFlipped));
 
-  // Mark buttons
+  // Mark buttons — disabled until card is revealed
   elBtnCorrect.addEventListener('click', () => markCard('correct'));
   elBtnWrong.addEventListener('click',   () => markCard('wrong'));
 
@@ -516,7 +498,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Session controls
   elBtnReset.addEventListener('click', resetScores);
-  elBtnNew.addEventListener('click', backToSetup);
+  elBtnNew.addEventListener('click',   backToSetup);
 
   // Review actions
   elBtnRetry.addEventListener('click', () => {
