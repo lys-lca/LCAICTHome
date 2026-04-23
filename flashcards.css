@@ -3,6 +3,15 @@
  * ─────────────────────────────────────────────────────────────
  * LCA ICT — Flashcards page styles.
  * Requires shared.css for tokens + nav.
+ *
+ * Layout order (game area):
+ *   progress bar
+ *   status row (counter + scores)
+ *   hint row       ← full-width, clearly separate from card
+ *   card           ← display only, no interaction
+ *   flip row       ← single "Reveal answer" button
+ *   action row     ← ✗ Incorrect | ← → | ✓ Correct
+ *   session controls
  * ─────────────────────────────────────────────────────────────
  */
 
@@ -148,7 +157,7 @@ select:focus { border-color: var(--accent); }
   height:        4px;
   background:    var(--surface2);
   border-radius: 2px;
-  margin-bottom: 0.9rem;
+  margin-bottom: 0.85rem;
   overflow:      hidden;
 }
 .progress-bar {
@@ -164,7 +173,7 @@ select:focus { border-color: var(--accent); }
   display:         flex;
   justify-content: space-between;
   align-items:     center;
-  margin-bottom:   0.9rem;
+  margin-bottom:   0.75rem;
 }
 
 .status-counter {
@@ -185,21 +194,76 @@ select:focus { border-color: var(--accent); }
 .score strong    { font-size: 15px; font-family: var(--display); font-weight: 700; }
 .score-correct   { color: #22c55e; }
 .score-wrong     { color: var(--accent2); }
-.score-hint      { color: var(--accent3); opacity: 0.8; }
+.score-hint      { color: var(--accent3); opacity: 0.85; }
 
-/* ── FLASHCARD ───────────────────────────────────────────── */
+/* ── HINT ROW ────────────────────────────────────────────── */
+/*
+ * Full-width row above the card. Clearly separate from the card.
+ * Large touch target — no risk of accidentally triggering anything else.
+ */
+.hint-row {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            0.5rem;
+  margin-bottom:  0.65rem;
+  min-height:     44px; /* always reserves space so card doesn't jump */
+}
+
+.btn-hint {
+  width:          100%;
+  padding:        0.7rem 1rem;
+  background:     var(--surface);
+  border:         1px solid var(--border);
+  border-radius:  var(--radius);
+  color:          var(--text-muted);
+  font-family:    var(--mono);
+  font-size:      12px;
+  letter-spacing: 0.05em;
+  cursor:         pointer;
+  transition:     all 0.15s;
+  text-align:     center;
+}
+.btn-hint:hover          { border-color: var(--accent3); color: var(--accent3); }
+.btn-hint.hint-revealed  { border-color: var(--accent3); color: var(--accent3);
+                           background: rgba(107,140,255,0.06); cursor: default; }
+
+.fc-hint-text {
+  font-family:  var(--sans);
+  font-size:    14px;
+  font-weight:  500;
+  color:        var(--accent3);
+  text-align:   center;
+  width:        100%;
+  padding:      0.5rem 0.75rem;
+  background:   rgba(107,140,255,0.07);
+  border:       1px solid rgba(107,140,255,0.2);
+  border-radius: var(--radius);
+  animation:    fadeUp 0.2s ease;
+}
+
+/* Acronym hint — bigger since it's the full term to memorise */
+.fc-hint-text.hint-acronym {
+  font-family:    var(--display);
+  font-size:      1.1rem;
+  font-weight:    700;
+  color:          var(--accent);
+  background:     rgba(79,255,176,0.07);
+  border-color:   rgba(79,255,176,0.2);
+}
+
+/* ── CARD — display only ─────────────────────────────────── */
 .card-stage {
   perspective:   1200px;
-  margin-bottom: 1.1rem;
+  margin-bottom: 0.65rem;
 }
 
 .fc-card {
-  width:    100%;
-  height:   300px;
-  cursor:   pointer;
-  outline:  none;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
+  width:       100%;
+  height:      240px;
+  /* no cursor, no pointer events — purely visual */
+  pointer-events: none;
+  user-select:    none;
 }
 
 .fc-inner {
@@ -214,21 +278,21 @@ select:focus { border-color: var(--accent); }
 .fc-card.flipped .fc-inner { transform: rotateY(180deg); }
 
 .fc-face {
-  position:              absolute;
-  inset:                 0;
-  border-radius:         var(--radius);
-  backface-visibility:   hidden;
+  position:            absolute;
+  inset:               0;
+  border-radius:       var(--radius);
+  backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  display:               flex;
-  flex-direction:        column;
-  align-items:           center;
-  justify-content:       center;
-  padding:               1.75rem;
-  text-align:            center;
-  background:            var(--surface);
-  border:                1px solid var(--border);
-  box-shadow:            var(--shadow);
-  overflow:              hidden;
+  display:             flex;
+  flex-direction:      column;
+  align-items:         center;
+  justify-content:     center;
+  padding:             1.5rem 1.75rem;
+  text-align:          center;
+  background:          var(--surface);
+  border:              1px solid var(--border);
+  box-shadow:          var(--shadow);
+  overflow:            hidden;
 }
 
 .fc-back {
@@ -237,15 +301,15 @@ select:focus { border-color: var(--accent); }
   justify-content: flex-start;
   align-items:     flex-start;
   text-align:      left;
-  padding:         1.5rem 1.6rem;
-  gap:             0.5rem;
+  padding:         1.25rem 1.5rem;
+  gap:             0.4rem;
 }
 
 /* ── CATEGORY TAG (top-left) ──────────────────────────────── */
 .fc-category-tag {
   position:       absolute;
-  top:            0.85rem;
-  left:           0.85rem;
+  top:            0.75rem;
+  left:           0.75rem;
   font-family:    var(--mono);
   font-size:      10px;
   letter-spacing: 0.07em;
@@ -256,11 +320,11 @@ select:focus { border-color: var(--accent); }
   color:          var(--text-dim);
 }
 
-/* ── CARD TYPE BADGE (top-right): ACRONYM or TERM ─────────── */
+/* ── TYPE BADGE (top-right) ───────────────────────────────── */
 .fc-type-badge {
   position:       absolute;
-  top:            0.85rem;
-  right:          0.85rem;
+  top:            0.75rem;
+  right:          0.75rem;
   font-family:    var(--mono);
   font-size:      9px;
   letter-spacing: 0.1em;
@@ -269,92 +333,36 @@ select:focus { border-color: var(--accent); }
   border-radius:  3px;
 }
 .fc-type-badge.type-acronym {
-  color:       var(--accent3);
-  border:      1px solid rgba(107,140,255,0.3);
-  background:  rgba(107,140,255,0.08);
+  color:      var(--accent3);
+  border:     1px solid rgba(107,140,255,0.3);
+  background: rgba(107,140,255,0.08);
 }
 .fc-type-badge.type-concept {
-  color:       var(--text-dim);
-  border:      1px solid var(--border);
-  background:  transparent;
+  color:      var(--text-dim);
+  border:     1px solid var(--border);
+  background: transparent;
 }
 
-/* ── TERM (front face) ────────────────────────────────────── */
+/* ── TERM (front) ─────────────────────────────────────────── */
 .fc-term {
   font-family:    var(--display);
-  font-size:      clamp(1.6rem, 5vw, 2.6rem);
+  font-size:      clamp(1.7rem, 6vw, 2.8rem);
   font-weight:    800;
   color:          var(--text);
   line-height:    1.1;
   letter-spacing: -0.02em;
-  margin-bottom:  1rem;
 }
 
-/* ── HINT ─────────────────────────────────────────────────── */
-.btn-hint {
-  background:     transparent;
-  border:         1px solid var(--border);
-  color:          var(--text-muted);
-  font-family:    var(--mono);
-  font-size:      11px;
-  letter-spacing: 0.05em;
-  padding:        0.3rem 0.85rem;
-  border-radius:  4px;
-  cursor:         pointer;
-  transition:     all 0.15s;
-  margin-bottom:  0.35rem;
-}
-.btn-hint:hover { border-color: var(--accent3); color: var(--accent3); }
-
-.fc-hint-text {
-  font-family:    var(--sans);
-  font-size:      13.5px;
-  font-weight:    500;
-  color:          var(--accent3);
-  margin-bottom:  0.25rem;
-  max-width:      340px;
-  animation:      fadeUp 0.2s ease;
-  text-align:     center;
-}
-
-/* acronym hint (the full term) — larger since it IS the answer to memorise */
-.fc-hint-text.hint-acronym {
-  font-family: var(--display);
-  font-size:   1.1rem;
-  font-weight: 700;
-  color:       var(--accent);
-}
-
-/* ── BACK FACE ────────────────────────────────────────────── */
-.fc-back-term {
-  font-family:    var(--display);
-  font-size:      1rem;
-  font-weight:    700;
-  color:          var(--accent);
-  margin-bottom:  0.25rem;
-  letter-spacing: -0.01em;
-}
-
-.fc-def {
-  font-family:  var(--sans);
-  font-size:    14px;
-  color:        var(--text);
-  line-height:  1.6;
-  font-weight:  300;
-  flex:         1;
-  overflow-y:   auto;
-  width:        100%;
-}
-
-/* ── FLIP CUE ─────────────────────────────────────────────── */
-.fc-flip-cue {
+/* ── HINT USED DOT (front, bottom-left) ──────────────────── */
+.fc-hint-dot {
   position:       absolute;
-  bottom:         0.7rem;
-  right:          0.85rem;
+  bottom:         0.65rem;
+  left:           0.75rem;
   font-family:    var(--mono);
   font-size:      9.5px;
-  color:          var(--text-dim);
-  letter-spacing: 0.05em;
+  color:          var(--accent3);
+  opacity:        0.75;
+  letter-spacing: 0.03em;
 }
 
 /* ── MARKED STATES ────────────────────────────────────────── */
@@ -367,17 +375,63 @@ select:focus { border-color: var(--accent); }
   box-shadow:   0 0 0 2px rgba(239,68,68,0.1), var(--shadow);
 }
 
-/* hint-used indicator on card front corner */
-.fc-hint-used-dot {
-  position:      absolute;
-  bottom:        0.7rem;
-  left:          0.85rem;
-  font-family:   var(--mono);
-  font-size:     9.5px;
-  color:         var(--accent3);
-  opacity:       0.7;
-  letter-spacing: 0.03em;
+/* ── BACK FACE CONTENT ────────────────────────────────────── */
+.fc-back-term {
+  font-family:    var(--display);
+  font-size:      1rem;
+  font-weight:    700;
+  color:          var(--accent);
+  letter-spacing: -0.01em;
+  flex-shrink:    0;
 }
+
+.fc-def {
+  font-family:  var(--sans);
+  font-size:    13.5px;
+  color:        var(--text);
+  line-height:  1.6;
+  font-weight:  300;
+  overflow-y:   auto;
+  width:        100%;
+  flex:         1;
+}
+
+/* ── FLIP ROW ────────────────────────────────────────────── */
+/*
+ * Large, obvious button below the card.
+ * Changes label once flipped.
+ */
+.flip-row {
+  margin-bottom: 0.75rem;
+}
+
+.btn-flip {
+  width:          100%;
+  padding:        0.85rem 1rem;
+  background:     var(--surface2);
+  border:         1px solid var(--border);
+  border-radius:  var(--radius);
+  color:          var(--text);
+  font-family:    var(--display);
+  font-size:      1rem;
+  font-weight:    700;
+  cursor:         pointer;
+  transition:     all 0.15s;
+  letter-spacing: -0.01em;
+}
+.btn-flip:hover { background: var(--surface); border-color: var(--accent3); color: var(--accent3); }
+
+/* Once flipped, flip button shows "Hide answer ↑" in a subtler style */
+.btn-flip.is-flipped {
+  color:        var(--text-muted);
+  font-weight:  400;
+  font-family:  var(--mono);
+  font-size:    11px;
+  letter-spacing: 0.05em;
+  background:   transparent;
+  border-color: var(--border);
+}
+.btn-flip.is-flipped:hover { border-color: var(--text-muted); color: var(--text); }
 
 /* ── ACTION BUTTONS ──────────────────────────────────────── */
 .action-row {
@@ -390,7 +444,7 @@ select:focus { border-color: var(--accent); }
 
 .btn-action {
   flex:           1;
-  padding:        0.65rem 0.85rem;
+  padding:        0.7rem 0.85rem;
   border-radius:  6px;
   border:         2px solid transparent;
   font-family:    var(--display);
@@ -401,19 +455,34 @@ select:focus { border-color: var(--accent); }
   letter-spacing: -0.01em;
 }
 
+/* Disabled state — waiting for card to be revealed */
+.btn-action:disabled {
+  opacity:       0.3;
+  cursor:        default;
+  transform:     none !important;
+}
+
 .btn-correct {
   background:   rgba(34,197,94,0.1);
   color:        #22c55e;
   border-color: rgba(34,197,94,0.28);
 }
-.btn-correct:hover { background: rgba(34,197,94,0.18); border-color: #22c55e; transform: translateY(-1px); }
+.btn-correct:not(:disabled):hover {
+  background:   rgba(34,197,94,0.18);
+  border-color: #22c55e;
+  transform:    translateY(-1px);
+}
 
 .btn-wrong {
   background:   rgba(239,68,68,0.09);
   color:        #ef4444;
   border-color: rgba(239,68,68,0.24);
 }
-.btn-wrong:hover { background: rgba(239,68,68,0.17); border-color: #ef4444; transform: translateY(-1px); }
+.btn-wrong:not(:disabled):hover {
+  background:   rgba(239,68,68,0.17);
+  border-color: #ef4444;
+  transform:    translateY(-1px);
+}
 
 .nav-btns { display: flex; gap: 0.35rem; }
 
@@ -492,7 +561,6 @@ select:focus { border-color: var(--accent); }
 .stat-hints   strong { color: var(--accent3); }
 .stat-pct     strong { color: var(--accent); }
 
-/* ── REVIEW SECTION TITLE ────────────────────────────────── */
 .review-section-title {
   font-family:    var(--mono);
   font-size:      11px;
@@ -516,12 +584,11 @@ select:focus { border-color: var(--accent); }
   border:       1px solid rgba(239,68,68,0.25);
 }
 
-/* ── REVIEW CARDS ────────────────────────────────────────── */
 .review-cards {
-  display:       flex;
+  display:        flex;
   flex-direction: column;
-  gap:           0.65rem;
-  margin-bottom: 1.75rem;
+  gap:            0.65rem;
+  margin-bottom:  1.75rem;
 }
 
 .review-card {
@@ -531,11 +598,7 @@ select:focus { border-color: var(--accent); }
   border-radius: var(--radius);
   padding:       1rem 1.2rem;
 }
-
-/* hint-used flag on a review card */
-.review-card.hint-used {
-  border-left-color: #f97316; /* orange tint when hint was used */
-}
+.review-card.hint-used { border-left-color: #f97316; }
 
 .review-card-header {
   display:         flex;
@@ -588,7 +651,6 @@ select:focus { border-color: var(--accent); }
   line-height: 1.55;
 }
 
-/* ── REVIEW ACTIONS ──────────────────────────────────────── */
 .review-actions {
   display:         flex;
   gap:             0.65rem;
@@ -630,7 +692,6 @@ select:focus { border-color: var(--accent); }
     font-size:     20pt;
     font-weight:   800;
     margin-bottom: 0.3cm;
-    color:         #000;
   }
 
   .print-subtitle {
@@ -654,7 +715,6 @@ select:focus { border-color: var(--accent); }
     page-break-inside: avoid;
   }
 
-  /* orange left border if hint was used */
   .print-card.hint-used { border-left: 2.5pt solid #f97316; }
 
   .print-card-term {
@@ -662,7 +722,6 @@ select:focus { border-color: var(--accent); }
     font-size:     10.5pt;
     font-weight:   800;
     margin-bottom: 0.1cm;
-    color:         #000;
   }
 
   .print-card-abbr {
@@ -673,9 +732,9 @@ select:focus { border-color: var(--accent); }
   }
 
   .print-card-hint-used {
-    font-size:    7.5pt;
-    color:        #e07010;
-    font-style:   italic;
+    font-size:     7.5pt;
+    color:         #e07010;
+    font-style:    italic;
     margin-bottom: 0.1cm;
   }
 
@@ -701,11 +760,10 @@ select:focus { border-color: var(--accent); }
 
 /* ── RESPONSIVE ──────────────────────────────────────────── */
 @media (max-width: 500px) {
-  .fc-card     { height: 270px; }
+  .fc-card     { height: 210px; }
   .fc-term     { font-size: 1.5rem; }
-  .action-row  { gap: 0.35rem; }
-  .btn-action  { font-size: 0.78rem; padding: 0.55rem 0.4rem; }
-  .btn-nav     { width: 36px; height: 36px; font-size: 15px; }
+  .btn-action  { font-size: 0.78rem; padding: 0.6rem 0.4rem; }
+  .btn-nav     { width: 38px; height: 38px; font-size: 15px; }
   .setup-panel { width: calc(100% - 2rem); }
   .print-cards { grid-template-columns: 1fr; }
   .review-stats { gap: 1rem; }

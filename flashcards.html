@@ -42,7 +42,7 @@
   <header class="page-header">
     <p class="page-label">Leaving Certificate Applied · ICT</p>
     <h1 class="page-title">Flash<span>cards</span></h1>
-    <p class="page-sub">Flip cards, mark correct or incorrect, review your mistakes.</p>
+    <p class="page-sub">Reveal the answer, then mark yourself correct or incorrect.</p>
   </header>
 
   <!-- ── SETUP PANEL ── -->
@@ -73,55 +73,66 @@
   <!-- ── GAME AREA ── -->
   <section class="game-area hidden" id="game-area">
 
+    <!-- Progress bar -->
     <div class="progress-wrap">
       <div class="progress-bar" id="progress-bar"></div>
     </div>
 
+    <!-- Counter + scores -->
     <div class="status-row">
       <span class="status-counter" id="status-counter">1 / 10</span>
       <div class="status-scores">
         <span class="score score-correct">✓ <strong id="score-correct">0</strong></span>
         <span class="score score-wrong">✗ <strong id="score-wrong">0</strong></span>
-        <span class="score score-hint" id="hint-score-wrap" title="Hints used">💡 <strong id="score-hints">0</strong></span>
+        <span class="score score-hint" title="Hints used">💡 <strong id="score-hints">0</strong></span>
       </div>
     </div>
 
-    <div class="card-stage" id="card-stage">
-      <div class="fc-card" id="fc-card" tabindex="0" role="button" aria-label="Flip card">
+    <!-- ── HINT ROW — wide tap target above the card ── -->
+    <div class="hint-row" id="hint-row">
+      <button class="btn-hint" id="btn-hint">💡 Show hint</button>
+      <div class="fc-hint-text hidden" id="fc-hint-text"></div>
+    </div>
+
+    <!-- ── CARD — purely visual, no tap/click/swipe ── -->
+    <div class="card-stage">
+      <div class="fc-card" id="fc-card">
         <div class="fc-inner" id="fc-inner">
 
           <!-- FRONT -->
           <div class="fc-face fc-front">
             <div class="fc-category-tag" id="fc-cat-tag"></div>
-            <!-- card-type badge: ACRONYM or TERM -->
-            <div class="fc-type-badge" id="fc-type-badge"></div>
-            <div class="fc-term" id="fc-term"></div>
-            <button class="btn-hint" id="btn-hint">💡 Show hint</button>
-            <div class="fc-hint-text hidden" id="fc-hint-text"></div>
-            <div class="fc-flip-cue">Tap to reveal →</div>
+            <div class="fc-type-badge"   id="fc-type-badge"></div>
+            <div class="fc-term"         id="fc-term"></div>
+            <div class="fc-hint-dot hidden" id="fc-hint-dot">💡 hint used</div>
           </div>
 
           <!-- BACK -->
           <div class="fc-face fc-back">
-            <!-- show full term on back for acronym cards -->
             <div class="fc-back-term hidden" id="fc-back-term"></div>
-            <div class="fc-def" id="fc-def"></div>
-            <div class="fc-flip-cue">Tap to flip back</div>
+            <div class="fc-def"             id="fc-def"></div>
           </div>
 
         </div>
       </div>
     </div>
 
-    <div class="action-row">
-      <button class="btn-action btn-wrong"   id="btn-wrong">✗ Incorrect</button>
-      <div class="nav-btns">
-        <button class="btn-nav" id="btn-prev" title="Previous">←</button>
-        <button class="btn-nav" id="btn-next" title="Next">→</button>
-      </div>
-      <button class="btn-action btn-correct" id="btn-correct">✓ Correct</button>
+    <!-- ── FLIP BUTTON — large, clearly labelled ── -->
+    <div class="flip-row">
+      <button class="btn-flip" id="btn-flip">Reveal answer ↓</button>
     </div>
 
+    <!-- ── MARK + NAV BUTTONS ── -->
+    <div class="action-row">
+      <button class="btn-action btn-wrong"   id="btn-wrong"   disabled>✗ Incorrect</button>
+      <div class="nav-btns">
+        <button class="btn-nav" id="btn-prev" title="Previous card">←</button>
+        <button class="btn-nav" id="btn-next" title="Next card">→</button>
+      </div>
+      <button class="btn-action btn-correct" id="btn-correct" disabled>✓ Correct</button>
+    </div>
+
+    <!-- Session controls -->
     <div class="session-controls">
       <button class="btn-ghost" id="btn-reset">↺ Reset scores</button>
       <button class="btn-ghost" id="btn-new-session">⊞ New session</button>
@@ -140,9 +151,9 @@
     <div class="review-incorrect-wrap" id="review-incorrect-wrap"></div>
 
     <div class="review-actions">
-      <button class="btn-start"  id="btn-retry-wrong">↺ Retry Incorrect</button>
-      <button class="btn-ghost"  id="btn-new-session-review">⊞ New Session</button>
-      <button class="btn-print"  id="btn-print">⎙ Print Incorrect</button>
+      <button class="btn-start" id="btn-retry-wrong">↺ Retry Incorrect</button>
+      <button class="btn-ghost" id="btn-new-session-review">⊞ New Session</button>
+      <button class="btn-print" id="btn-print">⎙ Print Incorrect</button>
     </div>
 
   </section>
