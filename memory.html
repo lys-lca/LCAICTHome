@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LCA ICT — Wordsearch</title>
+  <title>LCA ICT — Memory Game</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="shared.css">
-  <link rel="stylesheet" href="wordsearch.css">
+  <link rel="stylesheet" href="memory.css">
   <script>
     (function(){
       const t = localStorage.getItem('lca-ict-theme');
@@ -24,8 +24,8 @@
       <div class="nav-links" id="nav-links">
         <a href="glossary.html"    class="nav-link">Glossary</a>
         <a href="flashcards.html"  class="nav-link">Flashcards</a>
-        <a href="wordsearch.html"  class="nav-link active">Wordsearch</a>
-        <a href="memory.html"      class="nav-link">Memory</a>
+        <a href="wordsearch.html"  class="nav-link">Wordsearch</a>
+        <a href="memory.html"      class="nav-link active">Memory</a>
         <a href="quiz.html"        class="nav-link">Quiz</a>
         <a href="vteam.html"       class="nav-link">V-Team</a>
       </div>
@@ -40,13 +40,12 @@
   <!-- ── PAGE HEADER ── -->
   <header class="page-header">
     <p class="page-label">Leaving Certificate Applied · ICT</p>
-    <h1 class="page-title">Word<span>search</span></h1>
-    <p class="page-sub">Find the hidden words — the clues tell you what to look for.</p>
+    <h1 class="page-title">Memory <span>Game</span></h1>
+    <p class="page-sub">Match each term with its definition. Every pair counts.</p>
   </header>
 
   <!-- ── SETUP PANEL ── -->
   <section class="setup-panel" id="setup-panel">
-
     <div class="setup-grid">
 
       <!-- Category -->
@@ -59,42 +58,27 @@
         </div>
       </div>
 
-      <!-- Word count -->
+      <!-- Pair count -->
       <div class="setup-group">
-        <label class="setup-label">Words</label>
+        <label class="setup-label">Pairs</label>
         <div class="count-btns">
-          <button class="count-btn" data-count="8">8</button>
-          <button class="count-btn active" data-count="12">12</button>
-          <button class="count-btn" data-count="16">16</button>
+          <button class="count-btn" data-count="6">6</button>
+          <button class="count-btn active" data-count="8">8</button>
+          <button class="count-btn" data-count="10">10</button>
         </div>
       </div>
 
-      <!-- Clue mode -->
+      <!-- Mode -->
       <div class="setup-group setup-group-full">
-        <label class="setup-label">Clue Mode</label>
+        <label class="setup-label">Mode</label>
         <div class="toggle-opts">
-          <button class="toggle-opt active" data-clue="word">
-            <span class="opt-name">Word</span>
-            <span class="opt-desc">The word is shown. Find it in the grid.</span>
-          </button>
-          <button class="toggle-opt" data-clue="definition">
-            <span class="opt-name">Definition</span>
-            <span class="opt-desc">The meaning is shown. Work out the word, then find it.</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Direction mode -->
-      <div class="setup-group setup-group-full">
-        <label class="setup-label">Direction</label>
-        <div class="toggle-opts">
-          <button class="toggle-opt active" data-dir="simple">
+          <button class="toggle-opt active" data-mode="simple">
             <span class="opt-name">Simple</span>
-            <span class="opt-desc">Words go right or down only.</span>
+            <span class="opt-desc">All cards are shown face-up first. Study them, then press Shuffle &amp; Hide to start the timer.</span>
           </button>
-          <button class="toggle-opt" data-dir="complex">
+          <button class="toggle-opt" data-mode="complex">
             <span class="opt-name">Complex</span>
-            <span class="opt-desc">Words can go any direction, including backwards and diagonal.</span>
+            <span class="opt-desc">Cards are hidden from the start. Flip two at a time to find matching pairs.</span>
           </button>
         </div>
       </div>
@@ -102,67 +86,58 @@
     </div>
 
     <div class="setup-footer">
-      <span class="setup-count" id="setup-count">— words available</span>
-      <button class="btn-start" id="btn-start">Generate →</button>
+      <span class="setup-count" id="setup-count">— pairs available</span>
+      <button class="btn-start" id="btn-start">Set Up →</button>
     </div>
+  </section>
 
+  <!-- ── STUDY PHASE (Simple mode only) ── -->
+  <section class="study-phase hidden" id="study-phase">
+    <div class="study-header">
+      <div class="study-info">
+        <h2 class="study-title">Study the cards</h2>
+        <p class="study-sub">Take your time — when you're ready, press Shuffle &amp; Hide to begin.</p>
+      </div>
+      <button class="btn-hide" id="btn-hide">Shuffle &amp; Hide ▶</button>
+    </div>
+    <div class="memory-grid" id="study-grid"></div>
   </section>
 
   <!-- ── GAME AREA ── -->
   <section class="game-area hidden" id="game-area">
-
-    <!-- Top bar: timer + progress + new game -->
     <div class="game-topbar">
       <div class="timer-wrap">
         <span class="timer-label">Time</span>
         <span class="timer-display" id="timer-display">0:00</span>
       </div>
-      <div class="found-progress">
-        <span id="found-count">0</span> / <span id="total-count">0</span> found
+      <div class="moves-wrap">
+        <span class="timer-label">Moves</span>
+        <span class="moves-display" id="moves-display">0</span>
+      </div>
+      <div class="pairs-wrap">
+        <span id="pairs-found">0</span> / <span id="pairs-total">0</span> matched
       </div>
       <button class="btn-ghost" id="btn-new-game">⊞ New game</button>
     </div>
-
-    <!-- Main layout: grid + clues -->
-    <div class="game-layout" id="game-layout">
-
-      <!-- Grid -->
-      <div class="grid-wrap">
-        <div class="ws-grid" id="ws-grid"></div>
-      </div>
-
-      <!-- Clues list -->
-      <div class="clues-wrap">
-        <div class="clues-header">
-          <span class="clues-title" id="clues-title">Words to find</span>
-        </div>
-        <ul class="clues-list" id="clues-list"></ul>
-      </div>
-
-    </div>
-
+    <div class="memory-grid" id="game-grid"></div>
   </section>
 
   <!-- ── COMPLETION PANEL ── -->
   <section class="completion-panel hidden" id="completion-panel">
-
     <div class="completion-inner">
-      <div class="completion-icon">✓</div>
-      <h2 class="completion-title">Puzzle Complete!</h2>
+      <div class="completion-icon">🎉</div>
+      <h2 class="completion-title">Well Done!</h2>
       <div class="completion-stats" id="completion-stats"></div>
     </div>
-
-    <div class="completion-words" id="completion-words"></div>
-
+    <div class="completion-summary" id="completion-summary"></div>
     <div class="completion-actions">
       <button class="btn-start" id="btn-play-again">Play Again</button>
       <button class="btn-ghost" id="btn-change-settings">Change Settings</button>
     </div>
-
   </section>
 
   <script src="glossary-data.js"></script>
   <script src="shared.js"></script>
-  <script src="wordsearch.js"></script>
+  <script src="memory.js"></script>
 </body>
 </html>
