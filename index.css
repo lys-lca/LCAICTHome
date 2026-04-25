@@ -1,0 +1,267 @@
+/*
+ * index.css
+ * ─────────────────────────────────────────────────────────────
+ * LCA ICT — Homepage styles.
+ * Requires shared.css for tokens + nav.
+ * ─────────────────────────────────────────────────────────────
+ */
+
+/* ── HERO ────────────────────────────────────────────────── */
+.hero {
+  position:   relative;
+  overflow:   hidden;
+  padding:    4rem 1.5rem 3.5rem;
+  max-width:  1200px;
+  margin:     0 auto;
+}
+
+.hero-inner {
+  position:  relative;
+  z-index:   2;
+  max-width: 560px;
+}
+
+.hero-label {
+  font-family:    var(--mono);
+  font-size:      11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color:          var(--accent);
+  margin-bottom:  0.75rem;
+}
+
+.hero-title {
+  font-family:    var(--display);
+  font-size:      clamp(3rem, 9vw, 6rem);
+  font-weight:    800;
+  line-height:    1;
+  letter-spacing: -0.03em;
+  color:          var(--text);
+  margin-bottom:  1.25rem;
+}
+.hero-title span { color: var(--accent); }
+
+.hero-sub {
+  font-size:   1rem;
+  color:       var(--text-muted);
+  font-weight: 300;
+  line-height: 1.65;
+  max-width:   440px;
+  margin-bottom: 2rem;
+}
+
+.btn-hero-primary {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.5rem;
+  background:     var(--accent);
+  color:          var(--bg);
+  text-decoration: none;
+  font-family:    var(--display);
+  font-size:      1rem;
+  font-weight:    700;
+  padding:        0.75rem 1.75rem;
+  border-radius:  var(--radius);
+  transition:     opacity 0.15s, transform 0.15s;
+  letter-spacing: -0.01em;
+}
+.btn-hero-primary:hover { opacity: 0.87; transform: translateY(-2px); }
+
+/* ── HERO DECORATION ─────────────────────────────────────── */
+.hero-deco {
+  position:       absolute;
+  right:          -80px;
+  top:            50%;
+  transform:      translateY(-50%);
+  width:          480px;
+  height:         480px;
+  pointer-events: none;
+}
+
+.deco-ring {
+  position:      absolute;
+  border-radius: 50%;
+  border:        1px solid var(--border);
+  top:           50%;
+  left:          50%;
+  transform:     translate(-50%, -50%);
+}
+.deco-ring-1 { width: 200px; height: 200px; border-color: var(--accent); opacity: 0.15; }
+.deco-ring-2 { width: 320px; height: 320px; opacity: 0.08; }
+.deco-ring-3 { width: 460px; height: 460px; opacity: 0.04; }
+
+/* ── SECTIONS ────────────────────────────────────────────── */
+.section {
+  padding:      2.5rem 0;
+  border-top:   1px solid var(--border);
+}
+
+.section-alt {
+  background: var(--surface);
+}
+[data-theme="light"] .section-alt {
+  background: var(--surface2);
+}
+
+.section-inner {
+  max-width: 1200px;
+  margin:    0 auto;
+  padding:   0 1.5rem;
+}
+
+.section-title {
+  font-family:    var(--display);
+  font-size:      clamp(1.4rem, 3vw, 2rem);
+  font-weight:    800;
+  color:          var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom:  1.5rem;
+  display:        flex;
+  align-items:    center;
+  gap:            0.75rem;
+  flex-wrap:      wrap;
+}
+
+.section-tag {
+  font-family:    var(--mono);
+  font-size:      10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color:          var(--accent);
+  background:     rgba(79,255,176,0.1);
+  border:         1px solid rgba(79,255,176,0.2);
+  padding:        3px 10px;
+  border-radius:  3px;
+  font-weight:    400;
+}
+[data-theme="light"] .section-tag {
+  background: rgba(10,122,80,0.08);
+  border-color: rgba(10,122,80,0.2);
+}
+
+.vteam-tag {
+  color:       var(--accent3);
+  background:  rgba(107,140,255,0.1);
+  border-color: rgba(107,140,255,0.2);
+}
+
+/* ── CARDS ROW ───────────────────────────────────────────── */
+.cards-row {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:                   1rem;
+}
+
+/* ── HUB CARD ────────────────────────────────────────────── */
+.hub-card {
+  display:         flex;
+  align-items:     flex-start;
+  gap:             1rem;
+  padding:         1.25rem;
+  background:      var(--surface);
+  border:          1px solid var(--border);
+  border-radius:   var(--radius);
+  text-decoration: none;
+  transition:      border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  position:        relative;
+  overflow:        hidden;
+}
+
+/* Accent left border */
+.hub-card::before {
+  content:    '';
+  position:   absolute;
+  top: 0; left: 0;
+  width:      3px;
+  height:     100%;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.hub-card:hover {
+  border-color: var(--surface2);
+  transform:    translateY(-3px);
+  box-shadow:   var(--shadow);
+}
+.hub-card:hover::before { background: var(--accent); }
+
+/* V-Team card has its own accent */
+.hub-card-vteam:hover::before { background: var(--accent3); }
+
+.section-alt .hub-card {
+  background: var(--bg);
+}
+[data-theme="light"] .section-alt .hub-card {
+  background: var(--surface);
+}
+
+.hub-card-icon {
+  font-size:   2rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top:  0.1rem;
+}
+
+.hub-card-body { flex: 1; }
+
+.hub-card-title {
+  font-family:    var(--display);
+  font-size:      1.05rem;
+  font-weight:    800;
+  color:          var(--text);
+  letter-spacing: -0.01em;
+  margin-bottom:  0.35rem;
+}
+
+.hub-card-desc {
+  font-size:   13px;
+  color:       var(--text-muted);
+  font-weight: 300;
+  line-height: 1.55;
+}
+
+.hub-card-arrow {
+  font-family: var(--mono);
+  font-size:   1rem;
+  color:       var(--text-dim);
+  flex-shrink: 0;
+  align-self:  center;
+  transition:  color 0.2s, transform 0.2s;
+}
+.hub-card:hover .hub-card-arrow {
+  color:     var(--accent);
+  transform: translateX(3px);
+}
+.hub-card-vteam:hover .hub-card-arrow { color: var(--accent3); }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.site-footer {
+  border-top:  1px solid var(--border);
+  padding:     1.5rem;
+  margin-top:  2rem;
+}
+
+.footer-inner {
+  max-width:       1200px;
+  margin:          0 auto;
+  display:         flex;
+  justify-content: center;
+  align-items:     center;
+  gap:             0.5rem;
+  font-family:     var(--mono);
+  font-size:       11px;
+  color:           var(--text-dim);
+  flex-wrap:       wrap;
+}
+
+.footer-dot { opacity: 0.4; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .hero        { padding: 2.5rem 1.25rem 2rem; }
+  .hero-deco   { display: none; }
+  .cards-row   { grid-template-columns: 1fr; }
+  .section     { padding: 2rem 0; }
+  .hub-card    { padding: 1rem; }
+  .hub-card-icon { font-size: 1.6rem; }
+}
